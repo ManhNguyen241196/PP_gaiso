@@ -14,7 +14,7 @@ listSlides = psr.slides
 
 #get all data textbox
 data_textBox = get_all_textBox(listSlides, {})
-# print(data_textBox) 
+print("data_textBox: ", data_textBox) 
 
 #classify slides
 (slide_menu_id, slides_part_id) = classify_slide(data_textBox)
@@ -29,52 +29,71 @@ print(obj_menu)
 
     #work in slide part
 part_slide = listSlides.get(257)
-        #get table in part slide
-for shape in part_slide.shapes:
-        if shape.has_table:
-            tbl = shape.table
-            rows = tbl.rows
-            check_index = (0,1,3,5,6,4,7)
-            for i in range(1,len(rows)):
-                list_cells = []
-                for j in check_index:
-                    cell = rows[i].cells[j]
-                    if(cell.is_spanned == True):
-                        list_cells.append(rows[i-1].cells[j].text_frame.text.replace(" ", ""))
-                    if(cell.is_spanned == False):
-                        list_cells.append(cell.text_frame.text.replace(" ", ""))             
-                        
-                list_cells[0] =list_cells[0].split("-")[0]
-                #check xem dang la 1.5j hay 3.0j
-                
-                
-                current_obj = obj_menu[list_cells[0]]
-                
-                def compare_menu(obj, kind):
-                    list_text_table = obj[kind]
-                    if(list_text_table == list_cells ):
-                        pass
-                    if(list_text_table != list_cells ):
-                        list_part = list_cells.copy()
-                        print("list_part: ", list_part)
-                        print("list_text_table: ", list_text_table)
-                        
-                        
-                        # for part_cell in list_part:
-                        #     for menu_cell in list_text_table:
-                        #         if(menu_cell == part_cell ):
-                        #             list_part.remove(part_cell)
-                        # print("list_part: ", list_part)
-                        
-                                    
-                    # list_cells
-                    
-                if("1.5" in rows[i].cells[2].text_frame.text):
-                    compare_menu(current_obj, "1.5タ")
-                if("3.0" in rows[i].cells[2].text_frame.text):
-                    print("check object 3.0")
-                    
-                # print("list_cells: ", list_cells)
 
+
+        #get table in part slide
+name_part = ""
+list_shap_textBox = []
+list_namePart_textBox = []  
+list_タ_textBox = []
+
+for shape in part_slide.shapes:
+    if shape.has_table:
+        tbl = shape.table
+        rows = tbl.rows
+        check_index = (1,3,5,6,4,7)
+        define_row_slide_menu = tbl.cell(1,0).text_frame.text.replace(" ", "").split("-")[0]
+        
+        object_row_menu = obj_menu[define_row_slide_menu]
+        
+        #so sánh table part với table menu
+        for i in range(1,len(rows)):
+            index_list_compare = 1
+            for j in check_index:
+                #xét từng cell trong bảng
+                cell = rows[i].cells[j]
+                
+                
+                cellCheck =rows[i].cells[2]
+                #dinh nghia func so sánh
+                def compare_func(list_compare):
+                        if(cell.is_spanned == True):
+                            cell_special = rows[i-1].cells[j]
+                            if(cell_special.text_frame.text.replace(" ", "") != list_compare[index_list_compare]):
+                                change_color(cell)
+                        if(cell.is_spanned == False):
+                            if(cell.text_frame.text.replace(" ", "") != list_compare[index_list_compare]):
+                                change_color(cell)
+                                
+                    #check xem dang la 1.5j hay 3.0j               
+                if("1.5" in cellCheck.text_frame.text):
+                    listCompare = object_row_menu['1.5タ']
+                    name_part = listCompare[1]
+                    compare_func(listCompare)
+                if("3.0" in cellCheck.text_frame.text):
+                    listCompare = object_row_menu['3.0タ']
+                    compare_func(listCompare)
+                index_list_compare =index_list_compare + 1
+
+        #phan loai cac text box
+    if shape.has_text_frame:
+        content_shape = shape.text_frame.text.replace(" ", "")
+        if('#' in content_shape):
+            list_shap_textBox.append(shape)
+        if((content_shape == "1.5タ") or(content_shape == "3.0タ") ):
+           list_タ_textBox.append(shape)
+           
+        list_texts = ('以下は細部の応力値です', "応力表", 'Table', 'Fig.')
+        for text in list_texts:
+            if(text in content_shape):
+                list_namePart_textBox.append(shape)
+                break
+            else:
+                pass
+    print(name_part)
+
+print("list_shap_textBox: ",list_shap_textBox) 
+print ("list_namePart_textBox: ", list_namePart_textBox )
+print('list_タ_textBox: ', list_タ_textBox)
 
 psr.save(path_save)
